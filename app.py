@@ -2,33 +2,23 @@ import requests
 import os
 import dotenv
 
-
+# Завантажуємо і перевіряємо наявність GROQ_API_KEY
 dotenv.load_dotenv()
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY не знайдено! Перевір файл .env та переконайся, що змінна GROQ_API_KEY встановлена.")
-# print(bool(GROQ_API_KEY))
+
+# Модель openai
 model = 'openai/gpt-oss-20b'
 
-context_text = ['''1. Кожен співробітник має право на щорічну оплачувану відпустку тривалістю 24 календарні дні,
-яку необхідно узгодити з керівником відділу не пізніше ніж за два тижні до її початку.''',
-'''2. Стандартний графік роботи компанії передбачає п'ятиденний робочий тиждень з 09:00 до 18:00,
-а у п'ятницю робочий день скорочується на одну годину.''',
-'''3. У разі виробничої необхідності співробітники можуть залучатися до роботи у вихідні дні, що
-оплачується у подвійному розмірі або компенсується додатковим днем відпочинку.''',
-'''4. Повернення придбаного товару належної якості можливе протягом 14 днів з моменту покупки за
-умови збереження його оригінальної упаковки та чека.''',
-'''5. Якщо товар має виробничий дефект, клієнт має право вимагати його заміни на аналогічний або
-повернути повну вартість протягом гарантійного терміну.''']
 
-
-def llm_request(user_input, context_text):
-
+def llm_request(user_input, context_text=''):
+    # З'єднуємо context_text в один рядок
     context_block = '\n'.join(context_text)
-
+    # Користувацьки промпт роль, питання
     user_prompt = [{'role': 'user', 'content': user_input}]
-
-    system_prompt = [{'role': 'system', 'content': f'''ТТи асистент, який відповідає на питання за документом компанії.
+    # системний промпт роль, інструкція для ШІ
+    system_prompt = [{'role': 'system', 'content': f'''Ти асистент, який відповідає на питання за документом компанії.
 
 ПРАВИЛА:
 1. Відповідай ТІЛЬКИ на основі тексту між мітками ДОКУМЕНТ і КІНЕЦЬ ДОКУМЕНТА.
@@ -40,36 +30,38 @@ def llm_request(user_input, context_text):
 ДОКУМЕНТ:
 {context_block}
 КІНЕЦЬ ДОКУМЕНТА'''}]
-# print(system_prompt)
-# print(system_prompt[0]['content'])
 
+    # З'єднюємо системний та користуватський промпт для повідомлення (запит) до LLM
     messages = system_prompt + user_prompt
-
+    # Створюємо змінну заздалегідь: якщо запит зірветься, вона лишиться None, а return не впаде
     response_ai = None
+
     try:
+        # Робимо запит (повідомлення) до LLM
         llm_prompt_form = requests.post('https://api.groq.com/openai/v1/chat/completions', 
                                         headers={'Authorization': f'Bearer {GROQ_API_KEY}'}, 
                                         json={'model': model, 'messages': messages})
+        # Кидаємо помилку (якщо є така)
         llm_prompt_form.raise_for_status()
-
+        # Перетворюємо відповідь LLM в JSON формат
         response_json = llm_prompt_form.json()
-        # print(llm_prompt_form.status_code)
-        # print(response_json['choices'][0]['message']['content'])
-
+        # Дістаємо з JSON чистий текст відповіді моделі
         response_ai = response_json['choices'][0]['message']['content']
-        
+    # Лапаємо помилку яку кинув raise_for_status() (якщо така була)
+    # Сервер відповів кодом помилки (401, 404, 429...)
     except requests.RequestException as e:
         if e.response is not None:
             print(f"Помилка при обробці запиту: {e.response.text}")
+        # Сервер не відповів взагалі 
         else:
             print(f"Не вдалося з'єднатися з сервером і варто перевірити інтернет \n {e}")
 
-    
+    # Повертаємо відповідь від LLM
     return response_ai
         
 
 
-
+# Точка входу в програму
 if __name__ == '__main__':
-    result = llm_request(input('Ваше питання: '), context_text)
+    result = llm_request(input('Ваше питання: '))
     print(result)
