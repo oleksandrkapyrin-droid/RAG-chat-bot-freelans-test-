@@ -10,9 +10,10 @@ if not GROQ_API_KEY:
 
 # Модель openai
 model = 'openai/gpt-oss-20b'
+# model = 'llama3-70b-8192'
 
 
-def llm_request(user_input, context_text=''):
+def llm_request(user_input, context_text):
     # З'єднуємо context_text в один рядок
     context_block = '\n'.join(context_text)
     # Користувацьки промпт роль, питання
@@ -40,7 +41,7 @@ def llm_request(user_input, context_text=''):
         # Робимо запит (повідомлення) до LLM
         llm_prompt_form = requests.post('https://api.groq.com/openai/v1/chat/completions', 
                                         headers={'Authorization': f'Bearer {GROQ_API_KEY}'}, 
-                                        json={'model': model, 'messages': messages})
+                                        json={'model': model, 'messages': messages, 'temperature': 0})
         # Кидаємо помилку (якщо є така)
         llm_prompt_form.raise_for_status()
         # Перетворюємо відповідь LLM в JSON формат
@@ -59,9 +60,3 @@ def llm_request(user_input, context_text=''):
     # Повертаємо відповідь від LLM
     return response_ai
         
-
-
-# Точка входу в програму
-if __name__ == '__main__':
-    result = llm_request(input('Ваше питання: '))
-    print(result)
