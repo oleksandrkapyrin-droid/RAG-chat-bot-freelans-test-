@@ -4,11 +4,11 @@ from app import llm_request
 
 def answer_question(question):
     result = collection.query(query_texts=[question], n_results=2)
-    result_answer = result['documents'][0]
-    result_metadata = result['metadatas'][0]    
-    llm_answer = llm_request(question, result_answer)
+    documents = result['documents'][0]
+    metadata = [item.get('point') for item in result['metadatas'][0]]
+    llm_answer = llm_request(question, documents)
 
-    answer = {'answer': llm_answer, 'sources': result_metadata}
+    answer = {'answer': llm_answer, 'sources': metadata}
 
     return answer
 

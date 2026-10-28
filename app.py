@@ -16,7 +16,7 @@ model = 'openai/gpt-oss-20b'
 def llm_request(user_input, context_text):
     # З'єднуємо context_text в один рядок
     context_block = '\n'.join(context_text)
-    # Користувацьки промпт роль, питання
+    # Користувацький промпт роль, питання
     user_prompt = [{'role': 'user', 'content': user_input}]
     # системний промпт роль, інструкція для ШІ
     system_prompt = [{'role': 'system', 'content': f'''Ти асистент, який відповідає на питання за документом компанії.
@@ -32,7 +32,7 @@ def llm_request(user_input, context_text):
 {context_block}
 КІНЕЦЬ ДОКУМЕНТА'''}]
 
-    # З'єднюємо системний та користуватський промпт для повідомлення (запит) до LLM
+    # З'єднюємо системний та користувацький промпт для повідомлення (запит) до LLM
     messages = system_prompt + user_prompt
     # Створюємо змінну заздалегідь: якщо запит зірветься, вона лишиться None, а return не впаде
     response_ai = None

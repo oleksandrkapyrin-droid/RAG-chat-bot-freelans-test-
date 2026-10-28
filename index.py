@@ -1,19 +1,42 @@
 from db import collection
+from pathlib import Path
+from pypdf import PdfReader
+import re
 
 
-context_text = ['''1. Кожен співробітник має право на щорічну оплачувану відпустку тривалістю 24 календарні дні,
-яку необхідно узгодити з керівником відділу не пізніше ніж за два тижні до її початку.''',
-'''2. Стандартний графік роботи компанії передбачає п'ятиденний робочий тиждень з 09:00 до 18:00,
-а у п'ятницю робочий день скорочується на одну годину.''',
-'''3. У разі виробничої необхідності співробітники можуть залучатися до роботи у вихідні дні, що
-оплачується у подвійному розмірі або компенсується додатковим днем відпочинку.''',
-'''4. Повернення придбаного товару належної якості можливе протягом 14 днів з моменту покупки за
-умови збереження його оригінальної упаковки та чека.''',
-'''5. Якщо товар має виробничий дефект, клієнт має право вимагати його заміни на аналогічний або
-повернути повну вартість протягом гарантійного терміну.''']
+all_text = ''
+docs_dir = Path('docs')
+p = 
+
+for pdf_path in Path('docs').glob('*.pdf'):
+    reader = PdfReader(pdf_path)
+    for page in reader.pages:
+        text = page.extract_text()
+        if text:
+            all_text += text + '\n'
+
+clean_text = re.sub(r'\s+', ' ', all_text).strip()
+
+
+def split_into_chunks(text, chunks_size=500, overlap=100):
+    
+    chunks = []
+    start = 0
+    text_length = len(text)
+
+    while start < text_length:
+        end = (start + chunks_size, text_length)
+        chunk = text[start:end]
+        chunks.append(chunk)
+        start += chunks_size - overlap
+
+    return chunks
+
+
+context_text = split_into_chunks(clean_text)
 
 collection.upsert(
     documents=context_text,
-    ids=[f'p{i}' for i, _ in enumerate(context_text, start=1)],
+    ids=[f'{p.stem}{i}' for i, _ in enumerate(context_text, start=1)],
     metadatas=[{'point': i} for i, _ in enumerate(context_text, start=1)]
 )
