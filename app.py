@@ -1,6 +1,6 @@
-import requests
-import os
-import dotenv
+import requests     # Зпити
+import os           # Для роботи з системою компа
+import dotenv       # Знаходить файл env з API KEY
 
 # Завантажуємо і перевіряємо наявність GROQ_API_KEY
 dotenv.load_dotenv()
@@ -10,7 +10,6 @@ if not GROQ_API_KEY:
 
 # Модель openai
 model = 'openai/gpt-oss-20b'
-# model = 'llama3-70b-8192'
 
 
 def llm_request(user_input, context_text):
